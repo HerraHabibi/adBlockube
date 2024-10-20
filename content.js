@@ -1,19 +1,24 @@
-const multVelocidad = 16; // Multiplicador de velocidad (MÁX 16)
+const porcentaje = 0.99;
 
-function saltarAnuncio(multVelocidad) {
+function saltarAnuncio(porcentaje) {
   const video = document.querySelector('video');
 
   if (video) {
     if (hayAnuncio()) {
-      // Acelerar la velocidad del anuncio
-      video.playbackRate = multVelocidad;
-      video.muted = true;
-      observarSaltarAnuncio();
-
+      if (isFinite(video.duration) && video.duration > 0 && video.currentTime < video.duration * porcentaje) {
+        // Avanzar y mutear el anuncio
+        video.currentTime = video.duration * porcentaje;
+        video.muted = true;
+        video.playbackRate = 16;
+        pulsarSaltarAnuncio();
+      }
+      else
+        console.log('El video no es finito');
+        
     } else {
-      // Reestablecer velocidad del vídeo
-      video.playbackRate = 1;
+      // Reestablecer el audio
       video.muted = false;
+      video.playbackRate = 1;
     }
   }
 }
@@ -23,42 +28,33 @@ function hayAnuncio() {
   return (adIndicator !== null);
 }
 
-function observarAnuncios(multVelocidad) {
+function observarAnuncios(porcentaje) {
   const observadorAnuncios = new MutationObserver((mutations) => {
     mutations.forEach(() => {
       if (hayAnuncio())
-        saltarAnuncio(multVelocidad);
+        saltarAnuncio(porcentaje);
     });
   });
 
-  // Inicia la observación en el contenedor del player y sus hijos
+  // Inicia la observación en el body y sus hijos
   observadorAnuncios.observe(document.body, { childList: true, subtree: true });
 }
 
 // Observar botón de saltar anuncio y si se puede presiona el botón
-function observarSaltarAnuncio() {
-  const divTiempoSaltar = document.querySelector('.ytp-preview-ad');
-  
-  if (divTiempoSaltar) {
-    const observadorBotonSaltar = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.target.style.display === 'none') {
-          const skipButton = document.querySelector('.ytp-skip-ad-button');
+function pulsarSaltarAnuncio() {
+  const intervalId = setInterval(() => {
+    const divTiempoSaltar = document.querySelector('.ytp-preview-ad');
+    const skipButton = document.querySelector('.ytp-skip-ad-button');
 
-          if (skipButton) {
-            skipButton.click();
-          }
-        }
-      });
-    });
-    
-    observadorBotonSaltar.observe(divTiempoSaltar, { attributes: true, attributeFilter: ['style'] });
-  }
+    if (divTiempoSaltar && window.getComputedStyle(divTiempoSaltar).display === 'none' && skipButton) {
+      skipButton.click();
+      clearInterval(intervalId);
+    }
+  }, 20);
 }
 
 // Ejecutar extensión al cargar la página
-if (hayAnuncio()) {
-  saltarAnuncio(multVelocidad);
-}
+if (hayAnuncio())
+  saltarAnuncio(porcentaje);
 
-observarAnuncios(multVelocidad);
+observarAnuncios(porcentaje);
