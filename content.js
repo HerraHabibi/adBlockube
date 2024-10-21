@@ -12,9 +12,6 @@ function saltarAnuncio(porcentaje) {
         video.playbackRate = 16;
         pulsarSaltarAnuncio();
       }
-      else
-        console.log('El video no es finito');
-        
     } else {
       // Reestablecer el audio
       video.muted = false;
