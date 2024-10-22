@@ -1,19 +1,20 @@
-const porcentaje = 0.99;
+const segundo = 5;
+const multVelocidad = 16;
 
-function saltarAnuncio(porcentaje) {
+function saltarAnuncio() {
   const video = document.querySelector('video');
 
   if (video) {
     if (hayAnuncio()) {
-      if (isFinite(video.duration) && video.duration > 0 && video.currentTime < video.duration * porcentaje) {
-        // Avanzar y mutear el anuncio
-        video.currentTime = video.duration * porcentaje;
+      if (isFinite(video.duration) && video.duration > 0 && video.currentTime < segundo) {
+        // Avanzar y mutear el anuncio y pulsar el botón de saltar anuncio
+        video.currentTime = segundo;
         video.muted = true;
-        video.playbackRate = 16;
-        pulsarSaltarAnuncio();
+        video.playbackRate = multVelocidad;
       }
+    
     } else {
-      // Reestablecer el audio
+      // Reestablecer el audio y la velocidad
       video.muted = false;
       video.playbackRate = 1;
     }
@@ -25,11 +26,11 @@ function hayAnuncio() {
   return (adIndicator !== null);
 }
 
-function observarAnuncios(porcentaje) {
+function observarAnuncios() {
   const observadorAnuncios = new MutationObserver((mutations) => {
     mutations.forEach(() => {
       if (hayAnuncio())
-        saltarAnuncio(porcentaje);
+        saltarAnuncio();
     });
   });
 
@@ -37,21 +38,8 @@ function observarAnuncios(porcentaje) {
   observadorAnuncios.observe(document.body, { childList: true, subtree: true });
 }
 
-// Observar botón de saltar anuncio y si se puede presiona el botón
-function pulsarSaltarAnuncio() {
-  const intervalId = setInterval(() => {
-    const divTiempoSaltar = document.querySelector('.ytp-preview-ad');
-    const skipButton = document.querySelector('.ytp-skip-ad-button');
-
-    if (divTiempoSaltar && window.getComputedStyle(divTiempoSaltar).display === 'none' && skipButton) {
-      skipButton.click();
-      clearInterval(intervalId);
-    }
-  }, 20);
-}
-
 // Ejecutar extensión al cargar la página
 if (hayAnuncio())
-  saltarAnuncio(porcentaje);
+  saltarAnuncio();
 
-observarAnuncios(porcentaje);
+observarAnuncios();
