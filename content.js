@@ -1,19 +1,21 @@
-const porcentaje = 0.99;
+const segundo = 5;
+const multVelocidad = 16;
 
-function saltarAnuncio(porcentaje) {
+function saltarAnuncio() {
   const video = document.querySelector('video');
 
   if (video) {
     if (hayAnuncio()) {
-      if (isFinite(video.duration) && video.duration > 0 && video.currentTime < video.duration * porcentaje) {
-        // Avanzar y mutear el anuncio
-        video.currentTime = video.duration * porcentaje;
+      if (isFinite(video.duration) && video.duration > 0 && video.currentTime < segundo) {
+        // Avanzar y mutear el anuncio y pulsar el botón de saltar anuncio
+        video.currentTime = segundo;
         video.muted = true;
-        video.playbackRate = 16;
-        pulsarSaltarAnuncio();
+        video.playbackRate = multVelocidad;
+        observarBotonSaltar();
       }
+    
     } else {
-      // Reestablecer el audio
+      // Reestablecer el audio y la velocidad
       video.muted = false;
       video.playbackRate = 1;
     }
@@ -25,11 +27,11 @@ function hayAnuncio() {
   return (adIndicator !== null);
 }
 
-function observarAnuncios(porcentaje) {
+function observarAnuncios() {
   const observadorAnuncios = new MutationObserver((mutations) => {
     mutations.forEach(() => {
       if (hayAnuncio())
-        saltarAnuncio(porcentaje);
+        saltarAnuncio();
     });
   });
 
@@ -37,21 +39,31 @@ function observarAnuncios(porcentaje) {
   observadorAnuncios.observe(document.body, { childList: true, subtree: true });
 }
 
-// Observar botón de saltar anuncio y si se puede presiona el botón
-function pulsarSaltarAnuncio() {
-  const intervalId = setInterval(() => {
-    const divTiempoSaltar = document.querySelector('.ytp-preview-ad');
-    const skipButton = document.querySelector('.ytp-skip-ad-button');
+function observarBotonSaltar() {
+  const skipObserver = new MutationObserver(() => {
+    if (!hayAnuncio())
+      skipObserver.disconnect();  // Dejar de observar una vez pulsado
 
-    if (divTiempoSaltar && window.getComputedStyle(divTiempoSaltar).display === 'none' && skipButton) {
-      skipButton.click();
-      clearInterval(intervalId);
+    const skipButton = document.querySelector('.ytp-skip-ad-button');
+    
+    if (skipButton && skipButton.tagName === 'BUTTON') {
+      
+      // Verificar si el botón está visible y habilitado
+      const buttonStyle = window.getComputedStyle(skipButton);
+
+      if (buttonStyle.display !== 'none' && buttonStyle.visibility !== 'hidden' && !skipButton.disabled) {
+        // Pulsar el botón si está visible y habilitado
+        skipButton.click();
+      }
     }
-  }, 20);
+  });
+
+  // Observar cambios en el DOM para ver cuándo aparece el botón
+  skipObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 // Ejecutar extensión al cargar la página
 if (hayAnuncio())
-  saltarAnuncio(porcentaje);
+  saltarAnuncio();
 
-observarAnuncios(porcentaje);
+observarAnuncios();
